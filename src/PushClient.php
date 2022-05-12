@@ -67,11 +67,19 @@ class PushClient
                 )
             );
         }
-        $socket = socket_create(AF_UNIX, SOCK_DGRAM, 0);
+        if (substr(php_uname(), 0, 7) == "Windows"){
+            $socket = socket_create(AF_INET, SOCK_DGRAM, 0);
+            $ipcSocketPath = '127.0.0.1';
+            $port = 10808;
+        } else {
+            $socket = socket_create(AF_UNIX, SOCK_DGRAM, 0);
+            $ipcSocketPath = $this->ipcSocketPath;
+            $port = 0;
+        }
         if ($socket === false) {
             throw new \RuntimeException('Could not open ipc socket.');
         }
-        $bytesSend = socket_sendto($socket, $dataToSend, $dataLength, MSG_EOF, $this->ipcSocketPath, 0);
+        $bytesSend = socket_sendto($socket, $dataToSend, $dataLength, MSG_EOF, $ipcSocketPath, $port);
         if ($bytesSend <= 0) {
             throw new \RuntimeException('Could not sent data to IPC socket.');
         }
@@ -79,4 +87,8 @@ class PushClient
 
         return true;
     }
+}
+
+if (!defined('MSG_EOF')) {
+    define ('MSG_EOF', 0);
 }

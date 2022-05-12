@@ -598,22 +598,24 @@ class Server
      */
     private function openIPCSocket(string $ipcSocketPath): void
     {
-		if (substr(php_uname(), 0, 7) == "Windows"){
-			$this->icpSocket = socket_create(AF_INET, SOCK_DGRAM, 0);
-			$ipcSocketPath = $this->host;
-		} else {
-			if (file_exists($ipcSocketPath)) {
-				unlink($ipcSocketPath);
-			}
-			$this->icpSocket = socket_create(AF_UNIX, SOCK_DGRAM, 0);
-		}
+        $ipcSocketPort = 0;
+        if (substr(php_uname(), 0, 7) == "Windows"){
+            $this->icpSocket = socket_create(AF_INET, SOCK_DGRAM, 0);
+            $ipcSocketPath = "0.0.0.0";
+            $ipcSocketPort = 10808;
+        } else {
+            if (file_exists($ipcSocketPath)) {
+                unlink($ipcSocketPath);
+            }
+            $this->icpSocket = socket_create(AF_UNIX, SOCK_DGRAM, 0);
+        }
         if ($this->icpSocket === false) {
             throw new \RuntimeException('Could not open ipc socket.');
         }
         if (socket_set_nonblock($this->icpSocket) === false) {
             throw new \RuntimeException('Could not set nonblock mode for ipc socket.');
         }
-        if (socket_bind($this->icpSocket, $ipcSocketPath) === false) {
+        if (socket_bind($this->icpSocket, $ipcSocketPath, $ipcSocketPort) === false) {
             throw new \RuntimeException('Could not bind to ipc socket.');
         }
         if ($this->ipcOwner !== '') {
